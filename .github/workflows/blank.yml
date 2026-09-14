@@ -16,9 +16,28 @@ jobs:
           MESSAGE: ${{ github.event.head_commit.message }}
           URL: ${{ github.event.head_commit.url }}
           COMPARE: ${{ github.event.compare }}
-          COMMITS: ${{ github.event.commits && toJson(github.event.commits) || '[]' }}
+          COMMITS: ${{ toJson(github.event.commits) }}
           REPO: ${{ github.repository }}
         run: |
+          BRAINROT=(
+            "no cap this commit is bussin fr fr 🧢"
+            "main character energy detected 💅"
+            "the grindset never sleeps 😤"
+            "certified banger commit, W dev 🏆"
+            "chat, is this real? 😳"
+            "skibidi shipped ✅"
+            "gyatt dayum look at that diff 📈"
+            "bro really said 'it works on my machine' and merged 💀"
+            "rizzing up the codebase 🔥"
+            "this one's for the sigma devs 🗿"
+            "POV: you pushed to main and nothing broke 🙏"
+            "cooked or cooking? we'll find out in CI 👨‍🍳"
+            "least productive WeDe dev (still shipped) 📦"
+            "mewing through the merge conflicts 🤫"
+            "it's giving deployment 💁"
+          )
+          ROT="${BRAINROT[RANDOM % ${#BRAINROT[@]}]}"
+
           COUNT=$(echo "$COMMITS" | jq 'length')
           TITLE=$(echo "$MESSAGE" | head -n1 | cut -c1-100)
 
@@ -30,12 +49,14 @@ jobs:
             --arg repo "$REPO" \
             --arg compare "$COMPARE" \
             --arg count "$COUNT" \
+            --arg rot "$ROT" \
             '{
               embeds: [{
                 title: ("📦 " + $title),
                 url: $url,
                 color: 1712467,
                 author: { name: ($author + " → main"), icon_url: $avatar },
+                description: $rot,
                 fields: [
                   { name: "Repository", value: $repo, inline: true },
                   { name: "Commits", value: $count, inline: true },
