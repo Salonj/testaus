@@ -1,0 +1,47 @@
+name: Discord notify
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          AUTHOR: ${{ github.actor }}
+          AVATAR: ${{ github.event.sender.avatar_url }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+          URL: ${{ github.event.head_commit.url }}
+          COMPARE: ${{ github.event.compare }}
+          COMMITS: ${{ github.event.commits && toJson(github.event.commits) || '[]' }}
+          REPO: ${{ github.repository }}
+        run: |
+          COUNT=$(echo "$COMMITS" | jq 'length')
+          TITLE=$(echo "$MESSAGE" | head -n1 | cut -c1-100)
+
+          jq -n \
+            --arg title "$TITLE" \
+            --arg url "$URL" \
+            --arg author "$AUTHOR" \
+            --arg avatar "$AVATAR" \
+            --arg repo "$REPO" \
+            --arg compare "$COMPARE" \
+            --arg count "$COUNT" \
+            '{
+              embeds: [{
+                title: ("📦 " + $title),
+                url: $url,
+                color: 1712467,
+                author: { name: ($author + " → main"), icon_url: $avatar },
+                fields: [
+                  { name: "Repository", value: $repo, inline: true },
+                  { name: "Commits", value: $count, inline: true },
+                  { name: "Diff", value: ("[Compare](" + $compare + ")"), inline: true }
+                ],
+                timestamp: (now | todate)
+              }]
+            }' \
+          | curl -sf -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK"
